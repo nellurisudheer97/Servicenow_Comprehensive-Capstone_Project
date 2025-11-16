@@ -54,7 +54,7 @@ app.get("/auth/login", (req, res) => {
     secure: false,
     sameSite: "lax",
     path: "/",
-    maxAge: 15 * 60 * 1000, // fixed: was set to absolute timestamp
+    maxAge: 15 * 60 * 1000, //
   });
 
   const params = new URLSearchParams({
@@ -191,7 +191,7 @@ app.post("/api/incidents", async (req, res) => {
   if (!session || !session.access_token)
     return res.status(401).send("Not authenticated");
 
-  const { impact, urgency, short_description } = req.body;
+  const {impact, urgency, short_description } = req.body;
 
   try {
     const r = await axios.post(
@@ -230,6 +230,7 @@ app.put("/api/incidents/:sys_id", async (req, res) => {
     const r = await axios.patch(
       `${SN_INTANCE}/api/now/table/incident/${sys_id}`,
       {
+  
         impact,
         urgency,
         short_description,

@@ -1,12 +1,4 @@
-import {
-  Stack,
-  Typography,
-  Button,
-  Card,
-  CardContent,
-  Grid,
-  TextField,
-} from "@mui/material";
+import { Stack, Typography, Button, Card, CardContent, Grid, TextField, MenuItem} from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "./AuthProvider";
 import axios from "axios";
@@ -19,9 +11,9 @@ export default function Home() {
     urgency: "",
     short_description: "",
   });
-  const [editing, setEditing] = useState(null); 
+  const [editing, setEditing] = useState(null);
+  const [search, setSearch] = useState("");
 
-  // Fetching theincidents
   useEffect(() => {
     async function fetchData() {
       if (isLogged) {
@@ -39,26 +31,30 @@ export default function Home() {
     fetchData();
   }, [isLogged]);
 
-
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Functionality of Insert or update incident
+  // FIXED INSERT + UPDATE LOGIC
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const payload = {
+      impact: Number(formData.impact),
+      urgency: Number(formData.urgency),
+      short_description: formData.short_description,
+    };
+
     try {
       if (editing) {
-        // Update the existing records
         await axios.put(
           `http://localhost:3001/api/incidents/${editing}`,
-          formData,
+          payload,
           { withCredentials: true }
         );
         alert("Incident updated successfully!");
       } else {
-        // Inserting the  new record
-        await axios.post("http://localhost:3001/api/incidents", formData, {
+        await axios.post("http://localhost:3001/api/incidents", payload, {
           withCredentials: true,
         });
         alert("Incident inserted successfully!");
@@ -77,7 +73,6 @@ export default function Home() {
     }
   };
 
-  // Delete the records
   const handleDelete = async (sys_id) => {
     try {
       await axios.delete(`http://localhost:3001/api/incidents/${sys_id}`, {
@@ -87,67 +82,163 @@ export default function Home() {
       alert("Incident deleted successfully!");
     } catch (err) {
       console.error("Delete failed:", err);
-      alert("Failed to delete incident.");
+      alert("Failed to delete the incident.");
     }
   };
 
-  // we can Edit the record 
+  // FIXED EDIT (values now load correctly)
   const handleEdit = (inc) => {
     setFormData({
-      impact: inc.impact || "",
-      urgency: inc.urgency || "",
+      impact: String(inc.impact || ""),
+      urgency: String(inc.urgency || ""),
       short_description: inc.short_description || "",
     });
     setEditing(inc.sys_id);
   };
 
+  const filteredIncidents = incidents.filter((inc) =>
+    inc.short_description.toLowerCase().includes(search.toLowerCase()) ||
+    inc.number.toLowerCase().includes(search.toLowerCase()) ||
+    inc.priority.toLowerCase().includes(search.toLowerCase()) ||
+    inc.state.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <>
       {isLogged && (
         <Stack spacing={3}>
-          <Typography variant="h5">Incident Management</Typography>
+          <Typography variant="h4" align="center" sx={{ mt: 4 }}>
+            Incident Management System
+          </Typography>
 
-          {/*This is Form Section */}
-          <form onSubmit={handleSubmit}>
-            <Stack
-              direction="row"
-              spacing={2}
-              alignItems="center"
-              justifyContent="center"
-            >
-              <TextField
-                label="Impact"
-                name="impact"
-                value={formData.impact}
-                onChange={handleChange}
-                size="small"
-              />
-              <TextField
-                label="Urgency"
-                name="urgency"
-                value={formData.urgency}
-                onChange={handleChange}
-                size="small"
-              />
-              <TextField
-                label="Short Description"
-                name="short_description"
-                value={formData.short_description}
-                onChange={handleChange}
-                size="small"
-                sx={{ width: 300 }}
-              />
-              <Button type="submit" variant="contained" color="primary">
-                {editing ? "Update Incident" : "Insert Incident"}
-              </Button>
-            </Stack>
-          </form>
+          {/* form  */}
+          <Card
+            sx={{
+              width: "78",
+              margin: "auto",
+              mt: 3,
+              p: 2,
+              borderRadius: "16px",
+              boxShadow: "0px 4px 12px rgba(0,0,0,0.1)",
+            }}
+          >
+            <form onSubmit={handleSubmit}>
+              <Stack
+                direction="row"
+                spacing={2}
+                alignItems="center"
+                justifyContent="center"
+                sx={{ py: 2 }}
+              >
+                {/* Impact values */}
+                <TextField
+                  select
+                  label="Impact"
+                  name="impact"
+                  value={formData.impact}
+                  onChange={handleChange}
+                  size="small"
+                  sx={{
+                    width: 150,
+                    borderRadius: "8px",
+                    "& .MuiInputBase-input": { color: "text.primary" },
+                    "& .MuiInputLabel-root": { color: "text.secondary" },
+                  }}
+                >
+                  <MenuItem value="1">1 - High</MenuItem>
+                  <MenuItem value="2">2 - Medium</MenuItem>
+                  <MenuItem value="3">3 - Low</MenuItem>
+                </TextField>
 
-          {/*Here the Incident Records */}
+                {/* Urgency values */}
+                <TextField
+                  select
+                  label="Urgency"
+                  name="urgency"
+                  value={formData.urgency}
+                  onChange={handleChange}
+                  size="small"
+                  sx={{
+                    width: 150,
+                    borderRadius: "8px",
+                    "& .MuiInputBase-input": { color: "text.primary" },
+                    "& .MuiInputLabel-root": { color: "text.secondary" },
+                  }}
+                >
+                  <MenuItem value="1">1 - High</MenuItem>
+                  <MenuItem value="2">2 - Medium</MenuItem>
+                  <MenuItem value="3">3 - Low</MenuItem>
+                </TextField>
+
+                {/* Short Description */}
+                <TextField
+                  label="Short Description"
+                  name="short_description"
+                  value={formData.short_description}
+                  onChange={handleChange}
+                  size="small"
+                  sx={{
+                    width: 280,    
+                    borderRadius: "8px",
+                    "& .MuiInputBase-input": { color: "text.primary" },
+                    "& .MuiInputLabel-root": { color: "text.secondary" },
+                  }}
+                />
+
+
+                {/* Submit Button */}
+                <Button
+                  type="submit"
+                  variant="contained"
+                  sx={{
+                    background: "#1976d2",
+                    px: 3,
+                    py: 1,
+                    borderRadius: "10px",
+                    textTransform: "none",
+                    fontWeight: "bold",
+                    "&:hover": { background: "#145da1" },
+                  }}
+                >
+                  {editing ? "Update Incident" : "Insert Incident"}
+                </Button>
+
+                {/* Search */}
+                <TextField
+                  label=" 🔍Search incidents..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  size="small"
+                  sx={{
+                    width:250,
+                    borderRadius: "10px",
+                    "& .MuiInputBase-input": { color: "text.primary" },
+                    "& .MuiInputLabel-root": { color: "text.secondary" },
+                  }}
+                />
+              </Stack>
+            </form>
+          </Card>
+
+          {/* LIST INCIDENTS */}
           <Grid container spacing={3} justifyContent="center">
-            {incidents.map((inc) => (
+            {filteredIncidents.map((inc) => (
               <Grid key={inc.sys_id} item>
-                <Card sx={{ width: 300, height: 200 }}>
+                {/* <Card sx={{ width: 300, height: 200 }}> */}
+                <Card
+                  sx={{
+                    width: 300,
+                    height: 200,
+                    borderRadius: "12px",
+                    transition: "0.3s ease",
+                    cursor: "pointer",
+                    "&:hover": {
+                      transform: "scale(1.05)",
+                      boxShadow: "0px 6px 16px rgba(237, 231, 231, 0.3)",
+                      backgroundColor: "rgba(25,118,210,0.06)",
+                    },
+                  }}
+                >
                   <CardContent>
                     <Typography variant="h6">
                       Incident #: {inc.number}
@@ -155,10 +246,13 @@ export default function Home() {
                     <Typography variant="body2">
                       Description: {inc.short_description}
                     </Typography>
-                    <Typography variant="body2">State: {inc.state}</Typography>
+                    <Typography variant="body2">
+                      State: {inc.state}
+                    </Typography>
                     <Typography variant="body2">
                       Priority: {inc.priority}
                     </Typography>
+
                     <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
                       <Button
                         variant="contained"
@@ -182,6 +276,7 @@ export default function Home() {
           </Grid>
         </Stack>
       )}
+
       {!isLogged && <Typography>Please log in</Typography>}
     </>
   );
